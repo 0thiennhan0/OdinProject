@@ -1,6 +1,6 @@
 let gameType = "tictactoe";
 
-const gameBoard = ((gameType) => {
+const GameBoard = ((gameType) => {
   let _board = gameType === "tictactoe" ? [...Array(9)] : [...Array(64)];
   const _boardContainer = document.querySelector(`#game-board`);
 
@@ -31,7 +31,7 @@ const gameBoard = ((gameType) => {
     for (let i = 0; i < _board.length; i++) {
       let box = document.createElement("div");
       box.classList.add("box");
-      box.setAttribute("date-index", i);
+      box.setAttribute("data-index", i);
       _boardContainer.appendChild(box);
     }
   })();
@@ -45,38 +45,72 @@ const gameBoard = ((gameType) => {
 })(gameType);
 
 const Player = (sign, name) => {
+  const type = "humnan";
   return {
     sign,
     name,
+    type,
   };
+};
+
+const AI = (sign) => {
+  let name = "ai";
+  const type = "computer";
+
+  const nextMove = () => {
+    let board = GameBoard.getBoard();
+    while (true) {
+      let rand = Math.floor(Math.random() * board.length);
+      if (!board[rand]) return rand;
+    }
+  };
+
+  return { sign, name, type, nextMove };
 };
 
 const displayController = (() => {})();
 
 const gameController = (() => {
   const _player1 = Player("X", "Player1");
-  const _player2 = Player("O", "Player2");
+  // const _player2 = Player("O", "Player2");
+  const _player2 = AI("O");
   let turn = 0;
 
   let _boxes = document.querySelectorAll(".box");
   const addBoxEventListener = () => {
     for (let box of _boxes) {
       box.addEventListener("click", () => {
-        const checkBox = gameBoard.setSignByIndex(
-          box.getAttribute("date-index"),
+        const checkSetSign = GameBoard.setSignByIndex(
+          box.getAttribute("data-index"),
           turn % 2 ? _player2.sign : _player1.sign,
           box,
         );
-        if (checkBox) {
+        if (checkSetSign) {
           turn++;
-          if (checkGameOver()) alert(checkGameOver().name);
+          if (checkGameOver()) {
+            alert(checkGameOver().name);
+            return;
+          }
+        }
+        if (_player2.type === "computer" && turn % 2 === 1) {
+          let pos = _player2.nextMove();
+          GameBoard.setSignByIndex(
+            pos,
+            _player2.sign,
+            document.querySelector(`[data-index="${pos}"]`),
+          );
+          turn++;
+          if (checkGameOver()) {
+            alert(checkGameOver().name);
+            return;
+          }
         }
       });
     }
   };
 
   const checkGameOver = (match = 3) => {
-    const board = gameBoard.getBoard();
+    const board = GameBoard.getBoard();
     const edge = board.length ** 0.5;
 
     //check match by row
